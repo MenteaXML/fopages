@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="fopages" basedir="." default="html">
+<description>Summarise the page masters in a FO document.</description>
+
+<dirname property="fopages.basedir" file="${ant.file.fopages}"/>
+
+<pathconvert property="fopages.basedir.converted" dirsep="/">
+  <path location="${fopages.basedir}" />
+  <!-- Ant under cygwin uses a lowercase drive letter, which some Java
+       programs don't recognise as a drive letter, so translate. -->
+  <map from="c:" to="/C:"/>
+  <map from="d:" to="/D:"/>
+  <map from="e:" to="/E:"/>
+</pathconvert>
+
+<pathconvert property="basedir.converted" dirsep="/">
+  <path location="${basedir}" />
+  <!-- Ant under cygwin uses a lowercase drive letter, which some Java
+       programs don't recognise as a drive letter, so translate. -->
+  <map from="c:" to="/C:"/>
+  <map from="d:" to="/D:"/>
+  <map from="e:" to="/E:"/>
+</pathconvert>
+
+<!-- Local file of properties determining or describing local
+     configuration. -->
+<property name="build.local.properties"
+	  location="${basedir.converted}/build.local.properties"/>
+<property file="${build.local.properties}"/>
+
+<!-- XML file of properties determining or describing local
+     configuration. -->
+<property name="build.properties.xml"
+	  location="${fochek.basedir.converted}/properties.xml"/>
+<property file="${build.properties.xml}"/>
+
+<!-- File of properties determining or describing local
+     configuration. -->
+<property name="build.properties"
+	  location="${fopages.basedir.converted}/build.properties"/>
+<property file="${build.properties}"/>
+<!-- XSLT stylesheet for dumping HTML. -->
+<property name="fopages.xsl"
+	  value="fopages.xsl" />
+
+<!-- Housekeeping properties. -->
+
+<!-- Whether to force processing to run. -->
+<property name="force" value="no" />
+
+<tstamp>
+  <format property="timestamp" pattern="yyyy-MM-dd"/>
+</tstamp>
+
+<!-- Whether to delete temporary files on exit. -->
+<property name="deleteonexit" value="false" />
+
+<!-- saxon.jar location depends on if run from oXygen or on OS. -->
+<condition property="saxon.jar" value="${ant.home}/../../lib/saxon9ee.jar">
+  <contains string="${ant.home}" substring="oxygen" casesensitive="false" />
+</condition>
+<condition property="saxon.jar" value="${saxon.jar.windows}">
+  <os family="windows" />
+</condition>
+<condition property="saxon.jar" value="${saxon.jar.mac}">
+  <os family="mac" />
+</condition>
+<property name="saxon.jar" value="${saxon.jar.unix}" />
+
+
+<!-- Targets -->
+
+<target name="single.basename">
+  <fail unless="single"
+        message="'single' property must be set to filename of single XML file to process." />
+  <!-- Basename of single file to process. -->
+  <basename property="single.basename" file="${single}" suffix=".fo" />
+</target>
+
+<target name="html" depends="single.basename">
+  <xslt in="${single}"
+        out="${single.basename}.html"
+        style="${fopages.xsl}"
+        classpath="${saxon.jar}"
+	force="${force}">
+    <factory name="net.sf.saxon.TransformerFactoryImpl">
+      <attribute
+          name="http://saxon.sf.net/feature/allow-external-functions" 
+          value="true"/>
+      <attribute
+          name="http://saxon.sf.net/feature/validation" 
+          value="false"/>
+    </factory>
+  </xslt>
+</target>
+
+<!-- Utility targets. -->
+
+<target name="echoproperties">
+  <echoproperties />
+</target>
+
+</project>
